@@ -171,6 +171,9 @@ class Parser
       	"(?: ?\\(?,? ?(?<year>" . $this->YEAR . ")\\)?)?" .      	
       	
       	")" .
+      	
+      	// anchor at end so partial matches don't silently drop the rest of the name
+      	"$" .
        
 		"/u";
 		
@@ -187,27 +190,33 @@ class Parser
 
 		
 		// Catch NCBI-style informal names
-		if (preg_match('/^\w+\s+(\(\w+\)\s+)?(sp\.|aff\.|cf\.|n\. sp\.)/', $result->scientificName->verbatim))
+		// sp, spp, aff, cf, nr (near), gr/grp (group), n. sp., with or without a full stop
+		if (preg_match('/^\w+\s+(\(\w+\)\s+)?(sp|spp|aff|cf|nr|near|gr|grp|n\.\s*sp)\b\.?/', $result->scientificName->verbatim))
 		{
+			$result->scientificName->type = NameType::informal;
 			return $result;
 		}
 		if (preg_match('/[A-Z]+-\d+/', $result->scientificName->verbatim))
 		{
+			$result->scientificName->type = NameType::informal;
 			return $result;
 		}
 		if (preg_match('/\s+group$/', $result->scientificName->verbatim))
 		{
+			$result->scientificName->type = NameType::informal;
 			return $result;
 		}
 		// Rhinolophus JLE sp. B
 		if (preg_match('/\s+sp\.\s+/', $result->scientificName->verbatim))
 		{
+			$result->scientificName->type = NameType::informal;
 			return $result;
 		}
 		
 		// Fungi/Metazoa group
 		if (preg_match('/\//', $result->scientificName->verbatim))
 		{
+			$result->scientificName->type = NameType::informal;
 			return $result;
 		}
 		
