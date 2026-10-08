@@ -209,6 +209,9 @@ while (!feof($file_handle))
 			{
 				switch ($k)
 				{
+					case '@id':
+						break;
+
 					case '@type':
 						$p = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
 						$o = $rdf_obj->{'@type'};	
@@ -232,11 +235,6 @@ while (!feof($file_handle))
 						break;
 						
 					case 'decimalLatitude':
-						$p = 'http://rs.tdwg.org/dwc/terms/' . $k;
-						$o = '"' . $v . '"^^<http://www.w3.org/2001/XMLSchema#decimal>';
-						$triples[] = [$s, $p, $o];
-						break;
-
 					case 'decimalLongitude':
 						$p = 'http://rs.tdwg.org/dwc/terms/' . $k;
 						$o = '"' . $v . '"^^<http://www.w3.org/2001/XMLSchema#decimal>';
@@ -262,21 +260,11 @@ while (!feof($file_handle))
 							$triples[] = [$s, $p, $o];						
 						}					
 						break;
-				}
-			
+				}			
 			}
-			
-			
-			$output = dump_triples($triples);			
+						
+		$output = dump_triples($triples);			
 		echo $output . "\n";
-		
-			
-			
-			
-	
-			
-			
-			
 		}
 	}
 	$row_count++;
