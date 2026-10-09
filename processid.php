@@ -46,7 +46,7 @@ while (!feof($file_handle))
 				}
 			}
 		
-			// print_r($data);	
+			//print_r($data);	
 			
 			$rdf_obj = new stdclass;
 			
@@ -128,6 +128,12 @@ while (!feof($file_handle))
 			{
 				$rdf_obj->recordedBy = $data->collectors; 
 			}
+
+			if (isset($data->collection_date_start))
+			{
+				$rdf_obj->eventDate = $data->collection_date_start; 
+			}
+					
 			
 			// location-------------------------------------------------------------------
 			if (isset($data->{'country/ocean'}))
@@ -193,7 +199,11 @@ while (!feof($file_handle))
 				
 				foreach ($datasets as $recordset)
 				{
-					$rdf_obj->isPartOf[] = 'https://portal.boldsystems.org/recordset/' . $recordset;
+					// only include datasets
+					if (preg_match('/^(DS|DATASET)-/', $recordset))
+					{
+						$rdf_obj->isPartOf[] = 'https://portal.boldsystems.org/recordset/' . $recordset;
+					}
 				}
 			}
 			
@@ -209,6 +219,7 @@ while (!feof($file_handle))
 			{
 				switch ($k)
 				{
+					// eat
 					case '@id':
 						break;
 
@@ -234,6 +245,7 @@ while (!feof($file_handle))
 						}
 						break;
 						
+						// decimal
 					case 'decimalLatitude':
 					case 'decimalLongitude':
 						$p = 'http://rs.tdwg.org/dwc/terms/' . $k;
@@ -241,15 +253,23 @@ while (!feof($file_handle))
 						$triples[] = [$s, $p, $o];
 						break;
 
+						// Wikidata property (seems random, but it's what GBIf RDF uses)
 					case 'wdt:P625':
 						$p = 'http://www.wikidata.org/prop/direct/P625';
 						$o = '"' . $v . '"^^<http://www.opengis.net/ont/geosparql#wktLiteral>';
 						$triples[] = [$s, $p, $o];
 						break;
 						
+						// we are using a URI for the accession, hence this is not handled by default
 					case 'associatedSequences':
 						$p = 'http://rs.tdwg.org/dwc/terms/' . $k;
 						$triples[] = [$s, $p, $v];	
+						break;
+						
+					case 'eventDate':
+						$p = 'http://rs.tdwg.org/dwc/terms/' . $k;
+						$o = nice_date($v);
+						$triples[] = [$s, $p, $o];	
 						break;
 				
 					default:
