@@ -30,19 +30,44 @@ The BOLD taxonomy ids are represented using a https://identifiers.org compact id
 
 ### Location
 
-I use geographical coordinates (latitude and longitude) if they are present and if they aren’t flagged as “Coordinates from country centroid” in the `coord` field in a BOLD record. For consistency with GBIF RDF geographic points are also stored as `geo:wktLiterals` with Wikidata predicate `wdt:P625` (http://www.wikidata.org/prop/direct/P625). The use of `geo:wktLiterals` means we can do spatial queries with GeoSPARQL.
+I use geographical coordinates (latitude and longitude) if they are present and if they aren’t flagged as “Coordinates from country centroid” in the `coord` field in a BOLD record. For consistency with GBIF RDF, geographic points are also stored as `geo:wktLiterals` with the Wikidata predicate `wdt:P625` (http://www.wikidata.org/prop/direct/P625). The use of `geo:wktLiterals` means we can do spatial queries with GeoSPARQL.
 
 GBIF RDF also creates arbitrary URIs for geographic location, and links them to the barcode using `dwciri:inDescribedPlace`. I have avoided doing this, in the hope in the future to perhaps use OpenStreetMap as the source of URIs for places. Note that OpenStreetMap is in QLever https://qlever.dev/api/osm-planet (Bast et al, 2021).
 
 ### Accession numbers
 
-Some barcodes have GenBank accession numbers (`insdc_accs`). We store these using https://identifiers.org compact identifier scheme for the [nucleotide](https://registry.identifiers.org/registry/nucleotide) namespace (Bernal-Llinares et al., 2021). For example, `NC_021001` is https://identifiers.org/nucleotide:NC_021001. Originally I planned to use the `insdc` namespace but that does not include sequences such as whole mitochondrial genomes.
+Some barcodes have GenBank accession numbers (`insdc_accs`). We store these using https://identifiers.org compact identifier scheme for the [nucleotide](https://registry.identifiers.org/registry/nucleotide) namespace (Bernal-Llinares et al., 2021). For example, `NC_021001` is https://identifiers.org/nucleotide:NC_021001. Originally I planned to use the `insdc` namespace but that does not include sequences such as whole mitochondrial genomes. Note that values in the `insdc_accs` are messy, and may include qualifiers such as `SUPPRESSED`.
 
 ### Datasets
 
 A barcode may be part of one or more datasets (“recordsets” in BOLD terminology). Some of those datasets may have a DataCite DOI, and some of those DOIs may in turn be cited in the literature (for example, by the paper that published the dataset). The BOLD data dump lists the record sets that a barcode belongs to, but does not provide dataset DOIs, nor dataset citations. I have created a dataset with this information elsewhere.
 
 We store record sets with either the `DS-` or `DATASET-` prefix.
+
+## Mapping accessions to citations
+
+The projects https://github.com/rdmpage/genbank-pubmed-links and  https://github.com/rdmpage/genbank-publication-links map accessions to the literature. 
+
+### PubMed
+
+`genbank-pubmed-links` matches accessions to PubMed IDs (PMID) using a list of accession numbers and PMIDs pairs downloaded from the NCBI. It then decorates those PMIDs with DOIs if the PubMed record includes a DOI. The link between PMID and accession is made using `https://schema.org/citation` and PMID and accession are represented by identifiers.org compact identifiers. If a work with a PMID also has a DOI, that link is represented by `https://schema.org/sameAs` and the DOI is represented using `https://doi.org/` and the DOI is in lower case.
+
+### Accessions to literature
+
+Many GenBank records have literature links that are not in PubMed. These records may have DOIs linking to the work that published the sequence, or they may have sufficient bibliographic information for the DOI to be discovered (either manually, or using webservices such as those provided by CrossRef). `genbank-publication-links` maps accession numbers to DOIs, and that mapping is expressed using `https://schema.org/citation`.
+
+
+## Taxonomic names
+
+The [BioNames](https://bionames.org) database maps animal taxonomic names to original publications. As a test case, rather than import the entire BioNames database I created two lists. The first is a list of all taxonomic names published in any of the DOIs from the accession to literature mapping, which capture new names published in papers that also published DNA barcodes. The second list was taxonomic names with publications with DOIs that also occurred in the BOLD database. This gives us the taxonomic literature relevant to BOLD taxa for which we have links to the literature. These two lists of names were merged, creating `bionames.tsv`, which was then converted into triples using `bionames.php`.
+
+
+## Literature
+
+Mapping accessions and taxonomic names to PMIDs and DOIs means we have links to literature, but no triples about those publications (beyond their links to sequences and/or names).
+
+## People
+
 
 
 ## References
