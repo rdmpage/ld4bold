@@ -19,6 +19,8 @@ $filename = "test/examples.tsv";
 
 $filename = "test/DS-CRUSTACE.tsv"; // see also https://www.flickr.com/photos/artour_a/albums/72157606769404758/
 
+$filename = "/Volumes/Acer/BOLD data packages/snapshots/BOLD_Public.06-Sep-2024/BOLD_Public.06-Sep-2024.tsv";
+
 $file_handle = fopen($filename, "r");
 while (!feof($file_handle)) 
 {
@@ -156,15 +158,15 @@ while (!feof($file_handle))
 			// geocoordinates-------------------------------------------------------------
 			if (isset($data->coord))
 			{
-				$go = true;
+				$accession_ok = true;
 				
 				// filter out country centroids
 				if (isset($data->coord_source) && ($data->coord_source === "Coordinates from country centroid"))
 				{
-					$go = false;
+					$accession_ok = false;
 				}
 			
-				if ($go)
+				if ($accession_ok)
 				{
 					if (preg_match('/[\(|\[](.*),\s*(.*)[\)|\]]/', $data->coord, $m))
 					{	
@@ -180,11 +182,29 @@ while (!feof($file_handle))
 			// sequence(s)----------------------------------------------------------------
 			if (isset($data->insdc_acs))
 			{
-				// NCBI URL
-				$rdf_obj->associatedSequences = 'https://www.ncbi.nlm.nih.gov/nuccore/' . $data->insdc_acs;
+				// This field can contain rubbish such as pending or suppressed records
+				// so we need to filter those out
+				$accession = $data->insdc_acs;				
+				$accession = str_replace('-SUPPRESSED', '', $accession);
+				$accession = str_replace('-WITHDRAWN', '', $accession);
+				$accession = preg_replace('/[^\w]+/', '', $accession);	
+				$accession = trim($accession);
+								
+				$go = true;
 				
-				// Identifiers.org
-				$rdf_obj->associatedSequences = 'https://identifiers.org/nucleotide:' . $data->insdc_acs;
+				if (preg_match('/Pending/', $accession))
+				{
+					$go = false;
+				}
+					
+				if ($go)
+				{
+					// NCBI URL
+					$rdf_obj->associatedSequences = 'https://www.ncbi.nlm.nih.gov/nuccore/' . $data->insdc_acs;
+				
+					// Identifiers.org
+					$rdf_obj->associatedSequences = 'https://identifiers.org/nucleotide:' . $data->insdc_acs;
+				}
 			}
 						
 			// dataset membership---------------------------------------------------------
@@ -283,8 +303,8 @@ while (!feof($file_handle))
 				}			
 			}
 						
-		$output = dump_triples($triples);			
-		echo $output . "\n";
+			$output = dump_triples($triples);			
+			echo $output . "\n";
 		}
 	}
 	$row_count++;
