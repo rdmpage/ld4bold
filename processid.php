@@ -180,6 +180,8 @@ while (!feof($file_handle))
 			}
 			
 			// sequence(s)----------------------------------------------------------------
+			$accession = '';
+			
 			if (isset($data->insdc_acs))
 			{
 				// This field can contain rubbish such as pending or suppressed records
@@ -187,24 +189,33 @@ while (!feof($file_handle))
 				$accession = $data->insdc_acs;				
 				$accession = str_replace('-SUPPRESSED', '', $accession);
 				$accession = str_replace('-WITHDRAWN', '', $accession);
+				$accession = preg_replace('/\.\d+$/', '', $accession); // ignore version
 				$accession = preg_replace('/[^\w]+/', '', $accession);	
 				$accession = trim($accession);
-								
-				$go = true;
 				
 				if (preg_match('/Pending/', $accession))
 				{
-					$go = false;
+					$accession = '';
 				}
-					
-				if ($go)
-				{
-					// NCBI URL
-					$rdf_obj->associatedSequences = 'https://www.ncbi.nlm.nih.gov/nuccore/' . $data->insdc_acs;
-				
-					// Identifiers.org
-					$rdf_obj->associatedSequences = 'https://identifiers.org/nucleotide:' . $data->insdc_acs;
-				}
+			}
+			else if (isset($data->sequence_run_site) 
+				&& $data->sequence_run_site === 'Mined from GenBank, NCBI'
+				&& isset($data->sampleid)
+				&& preg_match('/^[A-Z]{1,2}_?[0-9]{5,8}(\.[0-9]+)?$/', $data->sampleid))
+			{
+				// Sequences mined from GenBank often have an empty insdc_acs field,
+				// but sampleid is usually the GenBank accession. Use sequence_run_site
+				// rather than inst to detect mined sequences, as inst is unreliable.
+				$accession = preg_replace('/\.\d+$/', '', $data->sampleid); // ignore version
+			}
+			
+			if ($accession != '')
+			{
+				// NCBI URL
+				// $rdf_obj->associatedSequences = 'https://www.ncbi.nlm.nih.gov/nuccore/' . $accession;
+
+				// Identifiers.org
+				$rdf_obj->associatedSequences = 'https://identifiers.org/nucleotide:' . $accession;
 			}
 						
 			// dataset membership---------------------------------------------------------
