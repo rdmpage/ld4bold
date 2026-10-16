@@ -36,17 +36,23 @@ GBIF RDF also creates arbitrary URIs for geographic location, and links them to 
 
 ### Accession numbers
 
-Some barcodes have GenBank accession numbers (`insdc_accs`). We store these using https://identifiers.org compact identifier scheme for the [nucleotide](https://registry.identifiers.org/registry/nucleotide) namespace (Bernal-Llinares et al., 2021). For example, `NC_021001` is https://identifiers.org/nucleotide:NC_021001. Originally I planned to use the `insdc` namespace but that does not include sequences such as whole mitochondrial genomes. Note that values in the `insdc_accs` are messy, and may include qualifiers such as `SUPPRESSED`.
+Some barcodes have GenBank accession numbers (`insdc_accs`). We store these using https://identifiers.org compact identifier scheme for the [nucleotide](https://registry.identifiers.org/registry/nucleotide) namespace (Bernal-Llinares et al., 2021). For example, `NC_021001` is https://identifiers.org/nucleotide:NC_021001. Originally I planned to use the `insdc` namespace but that does not include sequences such as whole mitochondrial genomes. Note that values in the `insdc_accs` are messy, and may include qualifiers such as `-SUPPRESSED`.
+
+Note also that there are records where `inst` = `Mined from GenBank, NCBI` but `insdc_accs` is NULL. In these cases the accession number appears in the column `sampleid`. Yes, really.
 
 ### Datasets
 
-A barcode may be part of one or more datasets (“recordsets” in BOLD terminology). Some of those datasets may have a DataCite DOI, and some of those DOIs may in turn be cited in the literature (for example, by the paper that published the dataset). The BOLD data dump lists the record sets that a barcode belongs to, but does not provide dataset DOIs, nor dataset citations. I have created a dataset with this information elsewhere.
+A barcode may be part of one or more datasets (“recordsets” in BOLD terminology). Some of those datasets may have a DataCite DOI, and some of those DOIs may in turn be cited in the literature (for example, by the paper that published the dataset). The BOLD data dump lists the record sets that a barcode belongs to, but does not provide dataset DOIs, nor dataset citations. The file `recordsets.php` extracts distinct values for `bold_recordset_code_arr` from the parquet version of the datafile and outputs triples that state that each dataset is of type `https://schema.org/Dataset`. 
 
-We store record sets with either the `DS-` or `DATASET-` prefix.
+Note that we only do this for record sets with either the `DS-` or `DATASET-` prefix.
+
+## Mapping datasets to citations
+
+The project `bold-dataset-citations` maps BOLD datasets to DataCite DOIs (where available), and also has a manually created list of citations of BOLD datasets.
 
 ## Mapping accessions to citations
 
-The projects https://github.com/rdmpage/genbank-pubmed-links and  https://github.com/rdmpage/genbank-publication-links map accessions to the literature. 
+The projects https://github.com/rdmpage/genbank-pubmed-links and  https://github.com/rdmpage/genbank-publication-links map accessions to the literature, either to directly to PMIDs with associated DOIs via `sameAs`, or directly to DOIs.
 
 ### PubMed
 
@@ -66,8 +72,34 @@ The [BioNames](https://bionames.org) database maps animal taxonomic names to ori
 
 Mapping accessions and taxonomic names to PMIDs and DOIs means we have links to literature, but no triples about those publications (beyond their links to sequences and/or names).
 
+A separate project `csl-to-rdf` creates triples for bibliographic records, primarily those with DOIs.
+
 ## People
 
+People are added as part of adding publications. Some will have ORCID ids.
+
+To do: consider adding information on people who have identified and/or collected specimens.
+
+
+## Organisations
+
+Organisations are added as part of adding publications.
+
+To do: consider adding information on funding organisations.
+
+## GBIF
+
+To do: consider adding `sameAs` links to the barcode records.
+
+## Plazi
+
+To do: consider adding links from publication DOIs to Plazi records in Zenodo.
+
+## Make Data Count (MDC)
+
+The Make Data Count project includes citations of GenBank accessions and DataCite DOIs, such as BOLD datasets.
+
+To do: consider adding MDC citations.
 
 
 ## References
